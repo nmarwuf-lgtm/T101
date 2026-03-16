@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
+  <meta name="theme-color" content="#63b3ed"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="MedTerm"/>
+  <meta name="description" content="تطبيق ذكي لدراسة علم التشريح لطلاب التمريض"/>
+  <link rel="manifest" href="manifest.json"/>
+  <!-- iOS Icons -->
+  <link rel="apple-touch-icon" href="icons/icon-152.png"/>
+  <link rel="apple-touch-icon" sizes="72x72"   href="icons/icon-72.png"/>
+  <link rel="apple-touch-icon" sizes="96x96"   href="icons/icon-96.png"/>
+  <link rel="apple-touch-icon" sizes="128x128" href="icons/icon-128.png"/>
+  <link rel="apple-touch-icon" sizes="144x144" href="icons/icon-144.png"/>
+  <link rel="apple-touch-icon" sizes="152x152" href="icons/icon-152.png"/>
+  <link rel="apple-touch-icon" sizes="192x192" href="icons/icon-192.png"/>
+  <link rel="apple-touch-icon" sizes="512x512" href="icons/icon-512.png"/>
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png"/>
+  <link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png"/>
+  <!-- iOS splash & standalone -->
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="format-detection" content="telephone=no"/>
+  <title>MedTerm – علم التشريح</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+
+<!-- Sidebar Overlay -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+<!-- Side Drawer -->
+<aside class="side-drawer" id="sideDrawer">
+  <div class="drawer-header">
+    <div class="drawer-logo">
+      <svg width="32" height="32" viewBox="0 0 40 40"><circle cx="20" cy="20" r="18" fill="none" stroke="var(--accent)" stroke-width="2"/><path d="M20 10 L20 30 M12 18 L28 18" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round"/><circle cx="20" cy="14" r="3" fill="var(--accent-soft)"/></svg>
+      <span>MedTerm</span>
+    </div>
+    <button class="close-btn" onclick="closeSidebar()">✕</button>
+  </div>
+  <nav class="drawer-nav">
+    <a href="#" onclick="navigate('home');closeSidebar()"><span class="nav-icon">🏠</span> الرئيسية</a>
+    <a href="#" onclick="navigate('chapters');closeSidebar()"><span class="nav-icon">📚</span> الفصول</a>
+    <a href="#" onclick="navigate('study');closeSidebar()"><span class="nav-icon">🎴</span> وضع الدراسة</a>
+    <a href="#" onclick="navigate('favorites');closeSidebar()"><span class="nav-icon">⭐</span> المفضلة</a>
+    <a href="#" onclick="navigate('quiz');closeSidebar()"><span class="nav-icon">🧠</span> الاختبارات</a>
+    <a href="#" onclick="navigate('progress');closeSidebar()"><span class="nav-icon">📊</span> تقدمي</a>
+    <a href="#" onclick="navigate('overview');closeSidebar()"><span class="nav-icon">📋</span> لمحة عامة</a>
+    <a href="#" onclick="navigate('body3d');closeSidebar()"><span class="nav-icon">🫀</span> جسم الإنسان</a>
+    <div class="drawer-divider"></div>
+    <div class="drawer-section-title">الفصول السريعة</div>
+    <div id="drawerChaptersList"></div>
+  </nav>
+  <div class="drawer-footer">
+    <!-- Session Info Card -->
+    <div class="session-info-card" id="sessionInfoCard">
+      <div class="sic-header">
+        <span>🔐 جلسة آمنة</span>
+        <span class="sic-id" id="sessionIdShort">——</span>
+      </div>
+      <div class="sic-row"><span>بدأت:</span><span id="sessionStart">—</span></div>
+      <div class="sic-row"><span>آخر نشاط:</span><span id="lastActive">—</span></div>
+      <div class="sic-row"><span>مستوى الحماية:</span><span id="securityLevel">🔒 عالٍ</span></div>
+    </div>
+    <!-- Actions -->
+    <div class="drawer-footer-btns">
+      <button class="api-key-btn" onclick="openApiModal();closeSidebar()">🔑 مفتاح AI API</button>
+      <button class="api-key-btn" onclick="requestNotifications();closeSidebar()" id="notifBtn">🔔 تفعيل التذكيرات</button>
+      <button class="api-key-btn export-btn" onclick="SessionManager.exportSession();closeSidebar()">💾 نسخ احتياطي</button>
+      <label class="api-key-btn import-label">
+        📥 استيراد نسخة
+        <input type="file" id="importSessionInput" accept=".mtbak" style="display:none"
+               onchange="SessionManager.importSession(this.files[0])"/>
+      </label>
+      <button class="api-key-btn danger-btn" onclick="SessionManager.clearSession();closeSidebar()">🗑️ حذف الجلسة</button>
+    </div>
+    <p class="version">v4.0 · 14 فصل · 140 صفحة</p>
+  </div>
+</aside>
+
+<!-- Top Header -->
+<header class="top-header" id="topHeader">
+  <button class="hamburger" onclick="openSidebar()" aria-label="القائمة">
+    <span></span><span></span><span></span>
+  </button>
+  <div class="header-logo" onclick="navigate('home')">
+    <svg width="28" height="28" viewBox="0 0 40 40">
+      <circle cx="20" cy="20" r="18" fill="none" stroke="var(--accent)" stroke-width="2"/>
+      <path d="M20 10 L20 30 M12 18 L28 18" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round"/>
+      <circle cx="20" cy="14" r="3" fill="var(--accent-soft)"/>
+    </svg>
+    <span>MedTerm</span>
+  </div>
+  <div class="header-actions">
+    <div id="offlineIndicator" class="offline-dot" title="غير متصل" style="display:none">●</div>
+    <button class="icon-btn theme-toggle-btn" onclick="toggleTheme()" id="themeBtn" title="تغيير المظهر">
+      <span id="themeIcon">🌙</span>
+    </button>
+    <button class="icon-btn" onclick="navigate('favorites')" title="المفضلة">
+      <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" stroke-width="2" stroke-linejoin="round"/></svg>
+      <span class="badge" id="favBadge" style="display:none">0</span>
+    </button>
+  </div>
+</header>
+
+<!-- Main Content Area -->
+<main class="main-content" id="mainContent">
+
+  <!-- ======= HOME PAGE ======= -->
+  <section class="page active" id="page-home">
+    <div class="hero">
+      <div class="hero-bg"></div>
+      <div class="hero-content">
+        <div class="app-logo-big">
+          <svg width="64" height="64" viewBox="0 0 40 40">
+            <circle cx="20" cy="20" r="18" fill="none" stroke="var(--accent)" stroke-width="1.5"/>
+            <path d="M20 8 L20 32 M10 18 L30 18" stroke="var(--accent)" stroke-width="3" stroke-linecap="round"/>
+            <circle cx="20" cy="13" r="4" fill="var(--accent)" opacity="0.3"/>
+          </svg>
+        </div>
+        <h1 class="hero-title">MedTerm</h1>
+        <p class="hero-sub">دليلك الذكي لعلم التشريح</p>
+        <p class="hero-desc">١٤ فصلاً · ١٤٠ صفحة · شرح متعدد المصادر · نطق صوتي · اختبارات تفاعلية</p>
+        <button class="cta-btn" onclick="navigate('chapters')">
+          <span>ابدأ الدراسة</span>
+          <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="stats-row">
+      <div class="stat-card" onclick="navigate('progress')">
+        <span class="stat-num" id="statXP">0</span><span class="stat-lbl">XP</span>
+      </div>
+      <div class="stat-card" onclick="navigate('progress')">
+        <span class="stat-num" id="statLevel">١</span><span class="stat-lbl">المستوى</span>
+      </div>
+      <div class="stat-card"><span class="stat-num" id="statFav">0</span><span class="stat-lbl">مفضلة</span></div>
+      <div class="stat-card"><span class="stat-num" id="statDone">0</span><span class="stat-lbl">مكتمل</span></div>
+    </div>
+    <!-- XP Progress Bar -->
+    <div class="xp-bar-wrap" id="xpBarWrap">
+      <div class="xp-bar-info">
+        <span id="xpBarLabel">المستوى <span id="xpLevelLabel">١</span></span>
+        <span id="xpBarCount">0 / 100 XP</span>
+      </div>
+      <div class="xp-bar-track"><div class="xp-bar-fill" id="xpBarFill"></div></div>
+    </div>
+    <div class="section-header">
+      <h2>الفصول الدراسية</h2>
+      <button class="see-all" onclick="navigate('chapters')">عرض الكل</button>
+    </div>
+    <div class="chapters-grid" id="homeChaptersGrid"></div>
+  </section>
+
+  <!-- ======= CHAPTERS PAGE ======= -->
+  <section class="page" id="page-chapters">
+    <div class="page-header">
+      <h2>📚 جميع الفصول</h2>
+      <p>اختر فصلاً لعرض الشرح والترجمة</p>
+    </div>
+    <div class="chapters-grid full" id="allChaptersGrid"></div>
+  </section>
+
+  <!-- ======= CHAPTER DETAIL ======= -->
+  <section class="page" id="page-chapter-detail">
+    <div class="back-bar">
+      <button class="back-btn" onclick="navigate('chapters')">
+        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7" stroke-width="2" stroke-linecap="round"/></svg>
+        الفصول
+      </button>
+      <div class="chapter-progress-wrap">
+        <div class="chapter-progress-bar"><div class="chapter-progress-fill" id="chProgressFill"></div></div>
+      </div>
+      <button class="focus-mode-btn" id="focusModeBtn" onclick="toggleFocusMode()" title="وضع التركيز">🎯</button>
+    </div>
+    <div class="chapter-hero" id="chapterHero">
+      <div class="ch-icon" id="chIcon"></div>
+      <div class="ch-info">
+        <span class="ch-tag" id="chTag"></span>
+        <h2 id="chTitle"></h2>
+        <p id="chDesc"></p>
+      </div>
+      <button class="fav-toggle" id="chFavBtn" onclick="toggleChapterFav()">
+        <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" stroke-width="2" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+
+    <!-- Three main choices -->
+    <div class="ch-choices">
+      <button class="ch-choice-btn explain" onclick="showChapterMode('explain')">
+        <div class="cc-icon">🧬</div>
+        <div class="cc-text">
+          <span class="cc-title">شرح الفصل</span>
+          <span class="cc-sub">شرح مبسط من مصادر متعددة</span>
+        </div>
+        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+      <button class="ch-choice-btn translate" onclick="showChapterMode('translate')">
+        <div class="cc-icon">🌐</div>
+        <div class="cc-text">
+          <span class="cc-title">ترجمة الفصل</span>
+          <span class="cc-sub">ترجمة المصطلحات مع النطق الصوتي</span>
+        </div>
+        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+      <button class="ch-choice-btn images" id="chImagesBtn" onclick="showChapterMode('images')" style="display:none">
+        <div class="cc-icon">🖼️</div>
+        <div class="cc-text">
+          <span class="cc-title">صور الفصل</span>
+          <span class="cc-sub">صور تشريحية مشروحة بجودة عالية</span>
+        </div>
+        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+
+    <!-- Content tabs (explain mode) -->
+    <div class="ch-tabs-wrap" id="chTabsWrap" style="display:none">
+      <div class="ch-tabs">
+        <button class="ch-tab active" data-source="doctor" onclick="switchSource('doctor')">👨‍⚕️ الدكتور</button>
+        <button class="ch-tab" data-source="chatgpt" onclick="switchSource('chatgpt')">🤖 ChatGPT</button>
+        <button class="ch-tab" data-source="gemini" onclick="switchSource('gemini')">✨ Gemini</button>
+        <button class="ch-tab" data-source="notebook" onclick="switchSource('notebook')">📓 NotebookLM</button>
+      </div>
+      <div class="ch-source-content" id="chSourceContent"></div>
+    </div>
+
+    <!-- Translation mode -->
+    <div class="ch-translate-wrap" id="chTranslateWrap" style="display:none">
+      <div class="translate-controls">
+        <button class="trl-lang active" onclick="setTranslateLang('ar')">العربية 🇸🇦</button>
+        <button class="trl-lang" onclick="setTranslateLang('en')">English 🇬🇧</button>
+      </div>
+      <div class="ch-source-content" id="chTranslateContent"></div>
+    </div>
+
+    <!-- Images mode -->
+    <div class="ch-images-wrap" id="chImagesWrap" style="display:none"></div>
+  </section>
+
+  <!-- ======= STUDY MODE PAGE ======= -->
+  <section class="page" id="page-study">
+    <div class="page-header">
+      <h2>🎴 وضع الدراسة</h2>
+      <p>بطاقات تفاعلية لحفظ المصطلحات</p>
+    </div>
+    <div id="studyContainer"></div>
+  </section>
+
+  <!-- ======= PROGRESS PAGE ======= -->
+  <section class="page" id="page-progress">
+    <div class="page-header">
+      <h2>📊 تقدمي</h2>
+      <p>إحصاءات ونقاط ومستواك الدراسي</p>
+    </div>
+    <div id="progressContainer"></div>
+  </section>
+
+  <!-- ======= FAVORITES PAGE ======= -->
+  <section class="page" id="page-favorites">
+    <div class="page-header">
+      <h2>⭐ المفضلة</h2>
+      <p>الفصول التي حفظتها للمراجعة</p>
+    </div>
+    <div id="favoritesContainer"></div>
+  </section>
+
+  <!-- ======= QUIZ PAGE ======= -->
+  <section class="page" id="page-quiz">
+    <div class="page-header">
+      <h2>🧠 الاختبارات</h2>
+      <p>اختبر معلوماتك في علم التشريح</p>
+    </div>
+    <div id="quizContainer"></div>
+  </section>
+
+  <!-- ======= OVERVIEW PAGE ======= -->
+  <section class="page" id="page-overview">
+    <div class="page-header">
+      <h2>📋 لمحة عامة</h2>
+      <p>نظرة شاملة على منهج علم التشريح</p>
+    </div>
+    <div class="overview-grid" id="overviewGrid"></div>
+  </section>
+
+  <!-- ======= BODY 3D PAGE ======= -->
+  <section class="page" id="page-body3d">
+    <div class="page-header">
+      <h2>🫀 جسم الإنسان</h2>
+      <p>استكشف أعضاء جسم الإنسان بصور تفاعلية</p>
+    </div>
+    <div class="body-explorer" id="bodyExplorer"></div>
+  </section>
+
+</main>
+
+<!-- Bottom Navigation -->
+<nav class="bottom-nav" id="bottomNav">
+  <button class="nav-btn active" data-page="home" onclick="navigate('home')">
+    <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" stroke-width="2"/><polyline points="9 22 9 12 15 12 15 22" stroke-width="2"/></svg>
+    <span>الرئيسية</span>
+  </button>
+  <button class="nav-btn" data-page="chapters" onclick="navigate('chapters')">
+    <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z" stroke-width="2"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z" stroke-width="2"/></svg>
+    <span>الفصول</span>
+  </button>
+  <button class="nav-btn" data-page="study" onclick="navigate('study')">
+    <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="3" stroke-width="2"/><path d="M12 8v8M8 12h8" stroke-width="2" stroke-linecap="round"/></svg>
+    <span>دراسة</span>
+  </button>
+  <button class="nav-btn" data-page="quiz" onclick="navigate('quiz')">
+    <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3" stroke-width="2" stroke-linecap="round"/><line x1="12" y1="17" x2="12.01" y2="17" stroke-width="2" stroke-linecap="round"/></svg>
+    <span>اختبارات</span>
+  </button>
+  <button class="nav-btn" data-page="progress" onclick="navigate('progress')">
+    <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <span>تقدمي</span>
+  </button>
+</nav>
+
+<!-- Audio Player Bar -->
+<div class="audio-bar" id="audioBar" style="display:none">
+  <div class="audio-wave-anim"><span></span><span></span><span></span><span></span><span></span></div>
+  <div class="audio-info">
+    <span class="audio-title" id="audioTitle">جاري التشغيل...</span>
+    <span class="audio-lang" id="audioLang">AR</span>
+  </div>
+  <div class="audio-controls">
+    <button onclick="stopAudio()" title="إيقاف">
+      <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+    </button>
+    <div class="audio-progress"><div class="audio-progress-fill" id="audioProgressFill"></div></div>
+    <button onclick="toggleAudioLang()" class="lang-switch" id="langSwitch" title="تغيير اللغة">AR</button>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- ═══ PWA INSTALL SYSTEM ═══ -->
+
+<!-- Floating Install Button (always visible) -->
+<div id="installApp">
+  ⬇️ تحميل التطبيق
+</div>
+
+<!-- iOS Install Modal -->
+<div class="ios-install-overlay" id="iosInstallOverlay">
+  <div class="ios-install-modal">
+    <button class="ios-modal-close" onclick="closeIOSModal()">✕</button>
+    <div class="ios-modal-icon">📲</div>
+    <h3 class="ios-modal-title">ثبّت MedTerm على جهازك</h3>
+    <p class="ios-modal-desc">لتثبيت التطبيق على iPhone أو iPad، اتبع الخطوات:</p>
+    <div class="ios-steps">
+      <div class="ios-step">
+        <span class="ios-step-num">١</span>
+        <span>اضغط زر <strong>مشاركة ⎙</strong> في أسفل المتصفح</span>
+      </div>
+      <div class="ios-step">
+        <span class="ios-step-num">٢</span>
+        <span>اختر <strong>"إضافة إلى الشاشة الرئيسية"</strong></span>
+      </div>
+      <div class="ios-step">
+        <span class="ios-step-num">٣</span>
+        <span>اضغط <strong>"إضافة"</strong> للتأكيد</span>
+      </div>
+    </div>
+    <div class="ios-share-hint">
+      <svg width="24" height="24" fill="none" stroke="#63b3ed" viewBox="0 0 24 24" stroke-width="2">
+        <path d="M8 6l4-4 4 4M12 2v13" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M20 16v4a2 2 0 01-2 2H6a2 2 0 01-2-2v-4" stroke-linecap="round"/>
+      </svg>
+      <span>ابحث عن هذا الزر في شريط Safari</span>
+    </div>
+  </div>
+</div>
+
+<!-- API Key Modal -->
+<div class="modal-overlay" id="apiModal">
+  <div class="modal-box">
+    <div class="modal-icon">🔑</div>
+    <h3>مفتاح Anthropic API</h3>
+    <p>لتفعيل شرح الذكاء الاصطناعي المباشر، أضف مفتاح API الخاص بك:</p>
+    <input type="password" id="apiKeyInput" placeholder="sk-ant-..." class="api-input"/>
+    <div class="modal-actions">
+      <button class="modal-btn primary" onclick="saveApiKey()">حفظ وتفعيل</button>
+      <button class="modal-btn secondary" onclick="closeApiModal()">إغلاق</button>
+    </div>
+    <p class="modal-note">🔒 يُحفظ المفتاح محلياً في جهازك فقط ولا يُرسل لأي خادم خارجي</p>
+    <p class="api-key-warning">⚠️ تنبيه أمني: استخدام مفتاح API مباشرةً في المتصفح ينكشف في Network tab. للاستخدام الإنتاجي، استخدم Proxy server للحماية الكاملة.</p>
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+<script src="security.js" data-medterm="true"></script>
+<script src="session.js"  data-medterm="true"></script>
+<script src="features.js" data-medterm="true"></script>
+<script>
+// ============================================================
+//  PWA Manager v5.0 – Android + iOS + Desktop
+// ============================================================
+
+// ── Service Worker ────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js', { scope: './' })
+      .then(reg => {
+        reg.addEventListener('updatefound', () => {
+          const nw = reg.installing;
+          nw.addEventListener('statechange', () => {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller)
+              showToast('🔄 تحديث متاح! أعد تحميل الصفحة');
+          });
+        });
+      })
+      .catch(e => console.warn('[SW] Failed:', e));
+  });
+}
+
+// ── Helpers ───────────────────────────────────────────────
+const isIOS = () => /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+const isStandalone = () =>
+  window.matchMedia('(display-mode: standalone)').matches ||
+  window.navigator.standalone === true;
+
+const installBtn = document.getElementById('installApp');
+
+// ── Android / Chrome / Desktop ────────────────────────────
+let deferredPrompt = null;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+
+  // Show install button
+  if (!isStandalone()) installBtn.style.display = 'flex';
+
+  // Auto-prompt after 3 seconds (as requested)
+  setTimeout(() => {
+    if (deferredPrompt && !isStandalone()) {
+      deferredPrompt.prompt();
+    }
+  }, 3000);
+});
+
+installBtn.addEventListener('click', async () => {
+  if (isIOS()) {
+    // iOS: show step-by-step modal
+    openIOSModal();
+    return;
+  }
+  if (!deferredPrompt) {
+    showToast('📲 افتح قائمة المتصفح ← "إضافة إلى الشاشة الرئيسية"');
+    return;
+  }
+  deferredPrompt.prompt();
+  const result = await deferredPrompt.userChoice;
+  if (result.outcome === 'accepted') {
+    showToast('🎉 جاري تثبيت التطبيق...');
+    installBtn.style.display = 'none';
+  }
+  deferredPrompt = null;
+});
+
+// App installed event
+window.addEventListener('appinstalled', () => {
+  installBtn.style.display = 'none';
+  deferredPrompt = null;
+  showToast('✅ تم تثبيت MedTerm بنجاح!');
+  localStorage.setItem('pwa_installed', '1');
+});
+
+// ── iOS Modal ─────────────────────────────────────────────
+function openIOSModal() {
+  document.getElementById('iosInstallOverlay').classList.add('visible');
+}
+function closeIOSModal() {
+  document.getElementById('iosInstallOverlay').classList.remove('visible');
+}
+// Close on backdrop click
+document.getElementById('iosInstallOverlay').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('iosInstallOverlay')) closeIOSModal();
+});
+
+// ── Online / Offline ──────────────────────────────────────
+function updateOnlineStatus() {
+  const dot = document.getElementById('offlineIndicator');
+  if (dot) dot.style.display = navigator.onLine ? 'none' : 'block';
+}
+window.addEventListener('online',  () => { updateOnlineStatus(); showToast('✅ اتصل بالإنترنت'); });
+window.addEventListener('offline', () => { updateOnlineStatus(); showToast('📴 وضع بدون إنترنت'); });
+updateOnlineStatus();
+
+// ── Init on load ──────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  // Boot security & session systems first
+  if (typeof SecuritySystem !== 'undefined')  SecuritySystem.init();
+  if (typeof SessionManager  !== 'undefined')  SessionManager.init();
+
+  // Already installed as PWA → hide button
+  if (isStandalone() || localStorage.getItem('pwa_installed')) {
+    installBtn.style.display = 'none';
+    return;
+  }
+  // iOS: always show install button (no beforeinstallprompt on Safari)
+  if (isIOS()) {
+    installBtn.style.display = 'flex';
+    // Auto-show modal after 3s on first visit
+    if (!localStorage.getItem('ios_modal_shown')) {
+      setTimeout(() => {
+        openIOSModal();
+        localStorage.setItem('ios_modal_shown', '1');
+      }, 3000);
+    }
+    return;
+  }
+  // Android/Desktop: button shown when beforeinstallprompt fires (above)
+  // Fallback: show after 4s even if prompt doesn't fire
+  setTimeout(() => {
+    if (!isStandalone()) installBtn.style.display = 'flex';
+  }, 4000);
+});
+</script>
+</body>
+</html>
